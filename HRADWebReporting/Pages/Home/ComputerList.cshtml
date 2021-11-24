@@ -1,0 +1,121 @@
+﻿@page
+@model HRADWebReporting.Pages.Home.ComputerListModel
+@{
+    ViewData["Title"] = "Racunari";
+}
+
+
+<div class="row">
+    <div class="col-3 right-align">
+        <span style="font-size:18px;font-weight:500;color:teal" multiple="true">Operating system: </span>
+        <select id="polje1" multiple="multiple">
+        </select>
+    </div>
+    <div class="col-3 m3 right-align">
+        <span style="font-size: 18px; font-weight: 500; color: teal">Operating system version:</span>
+        <select id="polje2" multiple="multiple"></select>
+    </div>
+</div>
+<div class="row mt-2">
+    <table class="table table-bordered" id="myTable">
+        <thead class="thead-light ">
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Description</th>
+                <th scope="col">Operating system</th>
+                <th scope="col">Operating system version</th>
+                <th scope="col">Serviceprincipalname</th>
+            </tr>
+        </thead>
+        <tbody class="table-striped">
+            @foreach (var m in Model.computers)
+            {
+                <tr>
+                    <td>@m.name</td>
+                    <td>@m.description</td>
+                    <td>@m.operatingsystem</td>
+                    <td>@m.operatingsystemversion</td>
+                    <td>@m.serviceprincipalname</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+</div>
+
+@section Scripts {
+
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.0.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.0.1/js/buttons.print.min.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+
+            var table = $('#myTable').DataTable({
+                dom: 'Bflrtip',
+                "lengthMenu": [[20, 100, 50, -1], [20, 100, 50, "All"]],
+                dom: "<'row'<'col-4 myLabel'l><'col-5 myButtons'B><'col-3'f>>" +
+                    "<'row'<'col-12'tr>>" +
+                    "<'row'<'col-4'i><'col-8'p>>",
+                buttons: {
+                    buttons: [
+                        { extend: 'csv', className: 'btn btn-info' },
+                        { extend: 'excel', className: 'btn btn-success' }
+                    ],
+                    dom: {
+                        button: {
+                            className: 'btn'
+                        }
+                    }
+                },
+                "pagingType": "full_numbers",
+                initComplete: function () {
+
+                    this.api().columns([2]).every(function () {
+                        var column = this;
+                        var select = $("#polje1");
+                        nesto = column.data().unique().sort().each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>')
+                        });
+                    });
+                    this.api().columns([3]).every(function () {
+                        var column = this;
+                        var select = $("#polje2");
+                        column.data().unique().sort().each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>')
+                        });
+                    });
+                    $("#polje1,#polje2").formSelect();
+                }
+            });
+            $('#polje1').on('change', function () {
+                var search = [];
+                $.each($('#polje1 option:selected'), function () {
+                    search.push($(this).val());
+                });
+                search = search.join('|');
+                table.column(2).search(search, true, false, true).draw();
+            });
+            $('#polje2').on('change', function () {
+                var search = [];
+                $.each($('#polje2 option:selected'), function () {
+                    var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                    /*search.push($(this).val());*/
+                    search.push(val);
+                });
+
+                search = search.join('|');
+                table.column(3).search('^' + search, true, false, true).draw();
+            });
+        });
+    </script>
+}
